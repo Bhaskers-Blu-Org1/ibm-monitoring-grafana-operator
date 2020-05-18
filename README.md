@@ -12,6 +12,7 @@ platform, we support Openshift Container Platform.
 The latest version now is 1.8.0.
 
 ## Prerequisites
+
 This grafana operator is part of IBM Common Services.
 You can use OLM or ODLM to install.
 Other dependencies are as below:
@@ -25,7 +26,7 @@ For the details, please refer to the CR.
 
 - privileged SCC for operands
 - restricted SCC for operator
-  
+
 ## Documentation
 
 For installation and configuration, see [IBM Knowledge Center link](https://www-03preprod.ibm.com/support/knowledgecenter/en/SSHKN6/monitoring/1.8.0/monitoring_service.html).
