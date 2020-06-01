@@ -64,7 +64,6 @@ type GrafanaSpec struct {
 // MainOrg to decide which org as the main org  for all dashboards
 type DashboardConfig struct {
 	DashboardsStatus map[string]bool `json:"dashboardsStatus,omitempty"`
-	MainOrg          string          `json:"mainOrg,omitempty"`
 }
 
 type GrafanaResources struct {

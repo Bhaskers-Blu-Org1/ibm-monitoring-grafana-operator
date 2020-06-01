@@ -174,8 +174,13 @@ func getPodStatus(r *ReconcileGrafana) corev1.PodPhase {
 
 func reconcileAllDashboards(r *ReconcileGrafana, cr *v1alpha1.Grafana) error {
 
-	var namespace string = "kube-system"
 	var phase corev1.PodPhase
+
+	// Get the current namespace as main org
+	namespace, err := getCurrentNamespace()
+	if err != nil {
+		return err
+	}
 
 	log.Info("Start to reconcile grafana dashboards")
 	// Get status of grafana pod before creating dshboarding
@@ -190,17 +195,13 @@ func reconcileAllDashboards(r *ReconcileGrafana, cr *v1alpha1.Grafana) error {
 		}
 	}
 
-	// Update the dashboards status
-	if cr.Spec.DashboardsConfig != nil && cr.Spec.DashboardsConfig.MainOrg != "" {
-		namespace = cr.Spec.DashboardsConfig.MainOrg
-	}
-
 	selector := func(name string) client.ObjectKey {
 		return client.ObjectKey{
 			Namespace: namespace,
 			Name:      name,
 		}
 	}
+
 	dashboards.ReconcileDashboardsStatus(cr)
 
 	// Reconcile all the dashboards
