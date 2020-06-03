@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -31,7 +32,6 @@ import (
 	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/apis/operator/v1alpha1"
 	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller/dashboards"
 	utils "github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller/model"
-	dbv1 "github.ibm.com/IBMPrivateCloud/grafana-dashboard-crd/pkg/apis/monitoringcontroller/v1"
 )
 
 var IsGrafanaRunning bool = false
@@ -195,22 +195,15 @@ func reconcileAllDashboards(r *ReconcileGrafana, cr *v1alpha1.Grafana) error {
 		namespace = cr.Spec.DashboardsConfig.MainOrg
 	}
 
-	selector := func(name string) client.ObjectKey {
-		return client.ObjectKey{
-			Namespace: namespace,
-			Name:      name,
-		}
-	}
 	dashboards.ReconcileDashboardsStatus(cr)
 
 	// Reconcile all the dashboards
 	for name, status := range dashboards.DefaultDBsStatus {
-		db := &dbv1.MonitoringDashboard{}
-		err := r.client.Get(r.ctx, selector(name), db)
+		db, err := r.dbclient.Get(name, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				createdDB := dashboards.CreateDashboard(namespace, name, status)
-				err = r.client.Create(r.ctx, createdDB)
+				err = r.dbclient.Create(createdDB)
 				if err != nil {
 					log.Error(err, fmt.Sprintf("Fail to create dashboard %s in %s", name, namespace))
 					return err
@@ -220,7 +213,7 @@ func reconcileAllDashboards(r *ReconcileGrafana, cr *v1alpha1.Grafana) error {
 			return err
 		}
 		// Found this db, update it.
-		err = r.client.Update(r.ctx, db)
+		err = r.dbclient.Update(db)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Fail to update dashboard %s", name))
 			return err

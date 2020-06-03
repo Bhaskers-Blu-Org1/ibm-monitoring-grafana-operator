@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -32,9 +33,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/apis/operator/v1alpha1"
-	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller/config"
 	utils "github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller/model"
 	dbv1 "github.ibm.com/IBMPrivateCloud/grafana-dashboard-crd/pkg/apis/monitoringcontroller/v1"
+	dashboardClient "github.ibm.com/IBMPrivateCloud/grafana-dashboard-crd/pkg/clientset/versioned"
 )
 
 var log = logf.Log.WithName("controller_grafana")
@@ -53,12 +54,16 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	context := context.Background()
-	config := config.GetControllerConfig()
+	config := config.GetConfig()
+	dbclient, err := dashboardClient.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
 	return &ReconcileGrafana{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-		ctx:    context,
-		config: config,
+		client:   mgr.GetClient(),
+		scheme:   mgr.GetScheme(),
+		ctx:      context,
+		dbclient: dbclient,
 	}
 }
 
@@ -132,10 +137,10 @@ var _ reconcile.Reconciler = &ReconcileGrafana{}
 type ReconcileGrafana struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	ctx    context.Context
-	config *config.ControllerConfig
+	client   client.Client
+	scheme   *runtime.Scheme
+	ctx      context.Context
+	dbclient *dashboardClient.Interface
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
