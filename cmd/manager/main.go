@@ -17,7 +17,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/apis"
 	"github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller"
-	conf "github.com/IBM/ibm-monitoring-grafana-operator/pkg/controller/config"
 	"github.com/IBM/ibm-monitoring-grafana-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -46,11 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
-
-var iamNamespace string
-var iamServicePort string
-var initImage string
-var initImageTag string
 
 // Change below variables to serve metrics on different host or port.
 var (
@@ -73,11 +66,6 @@ func init() {
 	flagSet := pflag.CommandLine
 	flagSet.AddFlagSet(zap.FlagSet())
 
-	// Add flags registered by imported packages (e.g. glog and
-	// controller-runtime)
-	flagSet.AddGoFlagSet(flag.CommandLine)
-	flag.StringVar(&iamNamespace, "iam-namespace", conf.DefaultIamNamespace, "Set iam namespace.")
-	flag.StringVar(&iamServicePort, "iam-service-port", conf.IAMServicePort, "Set iam service port")
 	pflag.Parse()
 
 	// Use a zap logr.Logger implementation. If none of the zap
@@ -101,9 +89,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	newConfig := conf.GetControllerConfig()
-	newConfig.AddConfigItem(conf.IAMNamespaceName, iamNamespace)
-	newConfig.AddConfigItem(conf.IAMServicePortName, iamServicePort)
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
